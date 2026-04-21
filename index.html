@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload de Vídeos M3U8 - PandaVideo</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --primary-light: #818cf8;
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+            --background: #0f172a;
+            --surface: #1e293b;
+            --surface-light: #334155;
+            --text: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --border: #475569;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--background) 0%, #1a1f3a 100%);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><defs><filter id="glow"><feGaussianBlur stdDeviation="8" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter><linearGradient id="pandaGradient" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%23818cf8;stop-opacity:0.15"/><stop offset="100%" style="stop-color:%236366f1;stop-opacity:0.05"/></linearGradient></defs><circle cx="150" cy="200" r="300" fill="url(%23pandaGradient)" filter="url(%23glow)"/><circle cx="850" cy="800" r="250" fill="url(%23pandaGradient)" filter="url(%23glow)"/><g opacity="0.1" transform="translate(500, 500) scale(2)"><circle cx="0" cy="-30" r="45" fill="%23fff"/><circle cx="0" cy="-30" r="35" fill="%23000"/><circle cx="-15" cy="-35" r="12" fill="%23fff"/><circle cx="15" cy="-35" r="12" fill="%23fff"/><circle cx="-12" cy="-30" r="6" fill="%23000"/><circle cx="12" cy="-30" r="6" fill="%23000"/><ellipse cx="0" cy="0" rx="50" ry="60" fill="%23000"/><ellipse cx="-35" cy="-10" rx="25" ry="35" fill="%23000"/><ellipse cx="35" cy="-10" rx="25" ry="35" fill="%23000"/><ellipse cx="-30" cy="30" rx="20" ry="30" fill="%23000"/><ellipse cx="30" cy="30" rx="20" ry="30" fill="%23000"/><ellipse cx="0" cy="50" r="15" fill="%23000"/></g></svg>');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .wrapper {
+            position: relative;
+            z-index: 1;
+        }
+
+        .wrapper {
+            width: 100%;
+            max-width: 550px;
+        }
+
+        .container {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3),
+                        0 0 1px rgba(99, 102, 241, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        label i {
+            color: var(--primary);
+            font-size: 0.9rem;
+        }
+
+        input,
+        textarea {
+            padding: 12px 14px;
+            background: var(--surface-light);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        input:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.05);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        input::placeholder,
+        textarea::placeholder {
+            color: var(--text-secondary);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+            font-size: 0.9rem;
+        }
+
+        .optional-badge {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        button {
+            padding: 14px 24px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
+        }
+
+        button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .button-text {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .spinner {
+            display: none;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        button:disabled .spinner {
+            display: inline-block;
+        }
+
+        button:disabled .button-icon {
+            display: none;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 16px;
+            border-radius: 10px;
+            border-left: 4px solid;
+            display: none;
+            animation: slideIn 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.95rem;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result.success {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: var(--success);
+            color: #a7f3d0;
+        }
+
+        .result.error {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: var(--error);
+            color: #fca5a5;
+        }
+
+        .result.loading {
+            background: rgba(99, 102, 241, 0.1);
+            border-color: var(--primary);
+            color: #a5b4fc;
+        }
+
+        .result-icon {
+            font-size: 1.3rem;
+            flex-shrink: 0;
+        }
+
+        .result-content {
+            flex: 1;
+        }
+
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 20px 0;
+        }
+
+        .footer {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-top: 30px;
+        }
+
+        .footer a {
+            color: var(--primary);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer a:hover {
+            color: var(--primary-light);
+        }
+
+        /* Responsividade */
+        @media (max-width: 600px) {
+            .container {
+                padding: 30px 20px;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .header-icon {
+                font-size: 2.5rem;
+            }
+
+            button {
+                padding: 12px 20px;
+                font-size: 0.95rem;
+            }
+        }
+
+        /* Animação de pulso para sucesso */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .result.success {
+            animation: slideIn 0.3s ease, pulse 2s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="container">
+            <div class="header">
+                <div class="header-icon">
+                    <i class="fas fa-video"></i>
+                </div>
+                <h1>Upload M3U8</h1>
+                <p class="subtitle">Importe seus vídeos para a PandaVideo</p>
+            </div>
+
+            <form id="uploadForm">
+                <div class="form-group">
+                    <label for="url">
+                        <i class="fas fa-link"></i>
+                        URL M3U8
+                    </label>
+                    <input
+                        type="url"
+                        id="url"
+                        name="url"
+                        required
+                        placeholder="https://exemplo.com/playlist.m3u8"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="title">
+                        <i class="fas fa-heading"></i>
+                        Título
+                    </label>
+                    <input
+                        type="text"
+                        id="title"
+                        name="title"
+                        required
+                        placeholder="Título do seu vídeo"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="api_key">
+                        <i class="fas fa-key"></i>
+                        Chave da API
+                    </label>
+                    <input
+                        type="password"
+                        id="api_key"
+                        name="api_key"
+                        required
+                        placeholder="Sua chave da API PandaVideo"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="folder_id">
+                        <i class="fas fa-folder"></i>
+                        ID da Pasta <span class="optional-badge">Opcional</span>
+                    </label>
+                    <input
+                        type="text"
+                        id="folder_id"
+                        name="folder_id"
+                        placeholder="ID da pasta (deixe em branco se não tiver)"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="description">
+                        <i class="fas fa-file-alt"></i>
+                        Descrição <span class="optional-badge">Opcional</span>
+                    </label>
+                    <textarea
+                        id="description"
+                        name="description"
+                        placeholder="Descreva seu vídeo..."
+                    ></textarea>
+                </div>
+
+                <button type="submit" id="submitBtn">
+                    <span class="button-text">
+                        <span class="spinner"></span>
+                        <i class="button-icon fas fa-cloud-upload-alt"></i>
+                        <span>Fazer Upload</span>
+                    </span>
+                </button>
+            </form>
+
+            <div class="result" id="result">
+                <i class="result-icon" id="resultIcon"></i>
+                <div class="result-content" id="resultText"></div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="footer">
+                <p>
+                    <i class="fas fa-shield-alt"></i>
+                    Seus dados são seguros e criptografados
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const uploadForm = document.getElementById('uploadForm');
+        const resultDiv = document.getElementById('result');
+        const resultIcon = document.getElementById('resultIcon');
+        const resultText = document.getElementById('resultText');
+        const submitBtn = document.getElementById('submitBtn');
+
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+
+            // Mostrar estado de loading
+            submitBtn.disabled = true;
+            resultDiv.className = 'result loading';
+            resultDiv.style.display = 'flex';
+            resultIcon.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            resultText.textContent = 'Enviando seu vídeo...';
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    resultDiv.className = 'result success';
+                    resultIcon.innerHTML = '<i class="fas fa-check-circle"></i>';
+                    resultText.innerHTML = `
+                        <strong>✓ Upload iniciado com sucesso!</strong><br>
+                        Seu vídeo está sendo processado. Verifique sua dashboard em alguns minutos.
+                    `;
+                    uploadForm.reset();
+                } else {
+                    resultDiv.className = 'result error';
+                    resultIcon.innerHTML = '<i class="fas fa-exclamation-circle"></i>';
+                    resultText.innerHTML = `
+                        <strong>✗ Erro no upload</strong><br>
+                        ${result.error || 'Erro desconhecido'}
+                    `;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultIcon.innerHTML = '<i class="fas fa-exclamation-circle"></i>';
+                resultText.innerHTML = `
+                    <strong>✗ Erro de conexão</strong><br>
+                    ${error.message}
+                `;
+            } finally {
+                submitBtn.disabled = false;
+            }
+        });
+
+        // Validação em tempo real
+        document.getElementById('url').addEventListener('input', function() {
+            this.style.borderColor = this.validity.valid ? 'var(--border)' : 'var(--error)';
+        });
+    </script>
+</body>
+</html>
